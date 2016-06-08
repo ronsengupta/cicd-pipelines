@@ -1,0 +1,218 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>oc login -u$USER_NAME -p$USER_PASSWD --server=$OSE_SERVER --certificate-authority=$CERT_PATH
+
+oc project $DEVEL_PROJ_NAME
+
+#Is this a new deployment or an existing app? Decide based on whether the project is empty or not
+#If BuildConfig exists, assume that the app is already deployed and we need a rebuild
+
+BUILD_CONFIG=`oc get bc | tail -1 | awk &apos;{print $1}&apos;`
+
+if [ -z &quot;$BUILD_CONFIG&quot; -o &quot;$BUILD_CONFIG&quot; == &quot;NAME&quot; ]; then
+
+# no app found so create a new one
+  echo &quot;Create a new app&quot;
+  oc new-app --template=eap64-basic-s2i -p \
+  APPLICATION_NAME=$APP_NAME,HOSTNAME_HTTP=$APP_HOSTNAME,SOURCE_REPOSITORY_URL=$APP_GIT,SOURCE_REPOSITORY_REF=$APP_GIT_REF,CONTEXT_DIR=$APP_GIT_CONTEXT_DIR\
+   -l name=$APP_NAME
+ 
+  echo &quot;Find build id&quot;
+  BUILD_ID=`oc get builds | tail -1 | awk &apos;{print $1}&apos;`
+  rc=1
+  attempts=75
+  count=0
+  while [ $rc -ne 0 -a $count -lt $attempts ]; do
+    BUILD_ID=`oc get builds | tail -1 | awk &apos;{print $1}&apos;`
+    if [ $BUILD_ID == &quot;NAME&quot; ]; then
+      count=$(($count+1))
+      echo &quot;Attempt $count/$attempts&quot;
+      sleep 5
+    else 
+      rc=0
+      echo &quot;Build Id is :&quot; ${BUILD_ID}
+    fi 
+  done
+
+  if [ $rc -ne 0 ]; then
+    echo &quot;Fail: Build could not be found after maximum attempts&quot;
+    exit 1
+  fi 
+else
+
+  # Application already exists, just need to start a new build
+  echo &quot;App Exists. Triggering application build and deployment&quot;
+  BUILD_ID=`oc start-build ${BUILD_CONFIG}`
+  
+fi
+
+echo &quot;Waiting for build to start&quot;
+rc=1
+attempts=25
+count=0
+while [ $rc -ne 0 -a $count -lt $attempts ]; do
+  status=`oc get build ${BUILD_ID} --template &apos;{{'{{'}}.status.phase}}&apos;`
+  if [[ $status == &quot;Failed&quot; || $status == &quot;Error&quot; || $status == &quot;Canceled&quot; ]]; then
+    echo &quot;Fail: Build completed with unsuccessful status: ${status}&quot;
+    exit 1
+  fi 
+  if [ $status == &quot;Complete&quot; ]; then
+    echo &quot;Build completed successfully, will test deployment next&quot;
+    rc=0
+  fi
+  
+  if [ $status == &quot;Running&quot; ]; then
+    echo &quot;Build started&quot;
+    rc=0
+  fi
+  
+  if [ $status == &quot;Pending&quot; ]; then
+    count=$(($count+1))
+    echo &quot;Attempt $count/$attempts&quot;
+    sleep 5
+  fi
+done
+
+# stream the logs for the build that just started
+oc build-logs $BUILD_ID
+
+sleep 5
+
+echo &quot;Checking build result status&quot;
+rc=1
+count=0
+attempts=100
+while [ $rc -ne 0 -a $count -lt $attempts ]; do
+  status=`oc get build ${BUILD_ID} -t &apos;{{'{{'}}.status.phase}}&apos;`
+  if [[ $status == &quot;Failed&quot; || $status == &quot;Error&quot; || $status == &quot;Canceled&quot; ]]; then
+    echo &quot;Fail: Build completed with unsuccessful status: ${status}&quot;
+    exit 1
+  fi
+
+  if [ $status == &quot;Complete&quot; ]; then
+    echo &quot;Build completed successfully, will test deployment next&quot;
+    rc=0
+  else 
+    count=$(($count+1))
+    echo &quot;Attempt $count/$attempts&quot;
+    sleep 5
+  fi
+done
+
+if [ $rc -ne 0 ]; then
+    echo &quot;Fail: Build did not complete in a reasonable period of time&quot;
+    exit 1
+fi
+
+
+echo &quot;Checking build result status&quot;
+rc=1
+count=0
+attempts=100
+while [ $rc -ne 0 -a $count -lt $attempts ]; do
+  status=`oc get build ${BUILD_ID} -t &apos;{{'{{'}}.status.phase}}&apos;`
+  if [[ $status == &quot;Failed&quot; || $status == &quot;Error&quot; || $status == &quot;Canceled&quot; ]]; then
+    echo &quot;Fail: Build completed with unsuccessful status: ${status}&quot;
+    exit 1
+  fi
+
+  if [ $status == &quot;Complete&quot; ]; then
+    echo &quot;Build completed successfully, will test deployment next&quot;
+    rc=0
+  else 
+    count=$(($count+1))
+    echo &quot;Attempt $count/$attempts&quot;
+    sleep 5
+  fi
+done
+
+if [ $rc -ne 0 ]; then
+    echo &quot;Fail: Build did not complete in a reasonable period of time&quot;
+    exit 1
+fi
+
+# scale up the test deployment
+RC_ID=`oc get rc | tail -1 | awk &apos;{print $1}&apos;`
+
+echo &quot;Scaling up new deployment $test_rc_id&quot;
+oc scale --replicas=1 rc $RC_ID
+sleep 8
+
+
+echo &quot;Checking for successful test deployment at $HOSTNAME&quot;
+set +e
+RC=0
+count=0
+attempts=100
+while [ $RC -ne 200 -a $count -lt $attempts ]; do
+  RC=`curl --connect-timeout 2 -I --write-out %{http_code} -s --output /dev/null $APP_HOSTNAME`
+  if [ $RC == 200 ]; then
+    break
+  fi
+  count=$(($count+1))
+  echo &quot;Attempt $count/$attempts&quot;
+  sleep 5
+done
+set -e
+
+if [ $RC -ne 200 ]; then
+    echo &quot;Failed to access test deployment, aborting roll out. &quot; $RC
+    exit 1
+fi
+
+
+################################################################################
+##Include development test scripts here and fail with exit 1 if the tests fail##
+################################################################################</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger plugin="build-pipeline-plugin@1.5.2">
+      <configs/>
+      <downstreamProjectNames>{{ JOB_PREFIX }}-Deploy-Stg</downstreamProjectNames>
+    </au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger>
+  </publishers>
+  <buildWrappers>
+    <EnvInjectBuildWrapper plugin="envinject@1.92.1">
+      <info>
+        <propertiesContent>APP_HOSTNAME={{ DEV_APPLICATION_HOST_URL }}
+APP_NAME={{ MAVEN_ARTIFACT_ID }}
+APP_GIT={{ GIT_URL }}
+APP_GIT_REF={{ GIT_BRANCH }}
+APP_GIT_CONTEXT_DIR={{ GIT_CONTEXT }}
+USER_NAME={{ OPENSHIFT_USER }}
+OSE_SERVER={{ OPENSHIFT_SERVER }}
+CERT_PATH=
+DEVEL_PROJ_NAME={{ OPENSHIFT_DEV_PROJECT }}</propertiesContent>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+    </EnvInjectBuildWrapper>
+    <EnvInjectPasswordWrapper plugin="envinject@1.92.1">
+      <injectGlobalPasswords>false</injectGlobalPasswords>
+      <maskPasswordParameters>true</maskPasswordParameters>
+      <passwordEntries>
+        <EnvInjectPasswordEntry>
+          <name>USER_PASSWD</name>
+          <value>{{ OPENSHIFT_PASSWORD }}</value>
+        </EnvInjectPasswordEntry>
+        <EnvInjectPasswordEntry>
+          <name></name>
+          <value>q2tnc7RcipUXaUupteozoA==</value>
+        </EnvInjectPasswordEntry>
+      </passwordEntries>
+    </EnvInjectPasswordWrapper>
+  </buildWrappers>
+</project>

@@ -1,0 +1,7 @@
+---
+# This playbook deploys the jenkins pipeline for java eap projects
+
+- hosts: jenkins-pipeline
+
+  roles:
+    - java-eap

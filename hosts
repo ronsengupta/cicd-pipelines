@@ -1,0 +1,4 @@
+pipeline1 ansible_connection=local
+
+[jenkins-pipeline]
+pipeline1

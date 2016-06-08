@@ -1,0 +1,79 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>oc project $DEVEL_PROJ_NAME
+
+IS_NAME=`oc get is| tail -1|awk &apos;{print $1}&apos;`
+
+#get full name of the image
+FULL_IMAGE_NAME=`oc describe is ${IS_NAME} | grep -A1 &quot;Tag&quot; | tail -1 | sed &apos;s/\t$//g&apos; | sed &apos;s/.*\t//g&apos; | grep -o &apos;/.*$&apos; | cut -c2-`
+
+#Tag to promote to QA
+#KM - do we want to parameterize the image to tag or should we 
+#emphasize convention
+oc tag $FULL_IMAGE_NAME $DEVEL_PROJ_NAME/${IS_NAME}:promote
+
+
+#This should automatically initiate deployment
+
+oc project $PROD_PROJ_NAME
+
+#Find the DeploymentConfig to see if this is a new deployment or just needs an update
+DC_ID=`oc get dc | tail -1| awk &apos;{print $1}&apos;`
+
+if [ -z &quot;$DC_ID&quot; -o &quot;$DC_ID&quot; == &quot;NAME&quot; ]; then
+    oc new-app $DEVEL_PROJ_NAME/${IS_NAME}:promote 
+    SVC_ID=`oc get svc | tail -1 | awk &apos;{print $1}&apos;`
+    oc expose service $SVC_ID --hostname=$APP_HOSTNAME
+fi
+
+
+#find the new rc based on the FULL_IMAGE_NAME=$FULL_IMAGE_NAME
+RC_ID=&quot;&quot;
+attempts=75
+count=0
+while [ -z &quot;$RC_ID&quot; -a $count -lt $attempts ]; do
+    RC_ID=`oc get rc | grep &quot;$FULL_IMAGE_NAME&quot; | awk &apos;{print $1}&apos;`
+    count=$(($count+1))
+    sleep 5
+done
+
+if [ -z &quot;$RC_ID&quot; ]; then
+  echo &quot;Fail: App deployment was not successful&quot;
+  exit 1 
+fi
+
+#Scale the app to 1 pod (just to make sure)
+scale_result=`oc scale rc $RC_ID --replicas=1| awk &apos;{print $3}&apos;`
+
+if [ $scale_result != &quot;scaled&quot; ]; then
+  echo &quot;Fail: Scaling not successful&quot;
+  exit 1 
+fi</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <EnvInjectBuildWrapper plugin="envinject@1.92.1">
+      <info>
+        <propertiesContent>DEVEL_PROJ_NAME={{ OPENSHIFT_DEV_PROJECT }} 
+PROD_PROJ_NAME={( OPENSHIFT_STG_PROJECT }}
+APP_HOSTNAME={( APPLICATION_HOST_URL }}
+        </propertiesContent>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+    </EnvInjectBuildWrapper>
+  </buildWrappers>
+</project>

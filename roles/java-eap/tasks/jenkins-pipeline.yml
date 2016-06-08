@@ -1,0 +1,75 @@
+---
+
+    - name: Create output directory
+      #file: path=/etc/some_directory state=directory mode=0755
+      file: path=output state=directory mode=0755
+
+    - name: Create Build Config File
+      template: src=java-build.j2 dest=output/java-build.xml
+
+    - name: Create Test Config File
+      template: src=java-test-eap.j2 dest=output/java-test-eap.xml
+
+    - name: Create Dev Deploy Config File
+      template: src=java-deploy-dev.j2 dest=output/java-deploy-dev.xml
+
+    - name: Create Stg  Deploy Config File
+      template: src=java-deploy-stg.j2 dest=output/java-deploy-stg.xml
+
+    - name: Create List View 
+      template: src=java-list-view.j2 dest=output/java-list-view.xml
+
+    - name: Create Pipeline View
+      template: src=java-pipeline-view.j2 dest=output/java-pipeline-view.xml
+
+    - name: Deploy {{ JOB_PREFIX }}-Build
+      uri: 
+        url: "{{ JENKINS_HOST_URL }}/createItem?name={{ JOB_PREFIX }}-Build"
+        method: POST
+        return_content: yes
+        HEADER_Content-Type: "application/xml"
+        body: "{{ lookup('file', 'output/java-build.xml') }}"
+
+    - name: Deploy {{ JOB_PREFIX }}-Test-EAP
+      uri: 
+        url: "{{ JENKINS_HOST_URL }}/createItem?name={{ JOB_PREFIX }}-Test-EAP"
+        method: POST
+        return_content: yes
+        HEADER_Content-Type: "application/xml"
+        body: "{{ lookup('file', 'output/java-test-eap.xml') }}"
+
+    - name: Deploy {{ JOB_PREFIX }}-Deploy-Dev
+      uri: 
+        url: "{{ JENKINS_HOST_URL }}/createItem?name={{ JOB_PREFIX }}-Deploy-Dev"
+        method: POST
+        return_content: yes
+        HEADER_Content-Type: "application/xml"
+        body: "{{ lookup('file', 'output/java-deploy-dev.xml') }}"
+
+    - name: Deploy {{ JOB_PREFIX }}-Deploy-Stg
+      uri: 
+        url: "{{ JENKINS_HOST_URL }}/createItem?name={{ JOB_PREFIX }}-Deploy-Stg"
+        method: POST
+        return_content: yes
+        HEADER_Content-Type: "application/xml"
+        body: "{{ lookup('file', 'output/java-deploy-stg.xml') }}"
+
+    - name: Deploy {{ JENKINS_LISTVIEW_NAME }}
+      uri: 
+        url: "{{ JENKINS_HOST_URL }}/createView?name={{ JENKINS_LISTVIEW_NAME }}"
+        method: POST
+        return_content: yes
+        HEADER_Content-Type: "application/xml"
+        body: "{{ lookup('file', 'output/java-list-view.xml') }}"
+
+    - name: Deploy {{ JENKINS_PIPELINE_NAME }}
+      uri: 
+        url: "{{ JENKINS_HOST_URL }}/createView?name={{ JENKINS_PIPELINE_NAME }}"
+        method: POST
+        return_content: yes
+        HEADER_Content-Type: "application/xml"
+        body: "{{ lookup('file', 'output/java-pipeline-view.xml') }}"
+
+    - name: Remove Output Directory
+      file: path=output state=absent
+
