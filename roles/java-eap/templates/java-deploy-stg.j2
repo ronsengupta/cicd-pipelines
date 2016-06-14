@@ -68,9 +68,9 @@ fi</command>
   <buildWrappers>
     <EnvInjectBuildWrapper plugin="envinject@1.92.1">
       <info>
-        <propertiesContent>DEVEL_PROJ_NAME={{ OPENSHIFT_DEV_PROJECT }} 
-PROD_PROJ_NAME={( OPENSHIFT_STG_PROJECT }}
-APP_HOSTNAME={( APPLICATION_HOST_URL }}
+        <propertiesContent>DEVEL_PROJ_NAME={{ openshift_dev_project }} 
+PROD_PROJ_NAME={{ openshift_stg_project }}
+APP_HOSTNAME={{ application_host_url }}
         </propertiesContent>
         <loadFilesFromMaster>false</loadFilesFromMaster>
       </info>

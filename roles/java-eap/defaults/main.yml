@@ -1,23 +1,24 @@
-JOB_PREFIX: ""
-GIT_URL: https://git.example.com/project/project.git
-GIT_BRANCH: ""
-GIT_CONTEXT: ""
-MAVEN_GROUP_ID: ""
-MAVEN_ARTIFACT_ID: ""
-MAVEN_POM: pom.xml
-MAVEN_BUILD_GOALS: clean package
-MAVEN_TEST_GOALS: clean test
-BUILD_CHILD_PROJECTS: "{{ JOB_PREFIX }}-Deploy-Dev, {{ JOB_PREFIX }}-Test-EAP"
-DOWNSTREAM_PROJECTS: "{{ JOB_PREFIX }}-Deploy-Stg"
-NEXUS_REPO: http://nexus.example.com/content/repositories/releases/
-OPENSHIFT_USER: ""
-OPENSHIFT_PASSWORD: ""
-OPENSHIFT_SERVER: server.ose.example.com
-OPENSHIFT_DEV_PROJECT: eap-dev
-OPENSHIFT_STG_PROJECT: eap-stg
-APPLICATION_HOST_URL: dev.example.com
-DEV_APPLICATION_HOST_URL: stg.example.com
-JENKINS_LISTVIEW_NAME: "{{ JOB_PREFIX }}-JOBS"
-JENKINS_PIPELINE_NAME: "{{ JOB_PREFIX }}-Pipe"
-JENKINS_PIPELINE_JOBS: Build,Test-EAP,Deploy-Dev,Deploy-Stg
-JENKINS_HOST_URL: http://localhost:8080
+job_prefix: ""
+git_url: https://git.example.com/project/project.git
+git_branch: ""
+git_context: ""
+sonar_url: http://sonar.example.com
+maven_group_id: ""
+maven_artifact_id: ""
+maven_pom: pom.xml
+maven_build_goals: clean package
+maven_test_goals: "clean org.jacoco:jacoco-maven-plugin:prepare-agent test integration-test sonar:sonar -Dsonar.host.url={{ sonar_url }}"
+build_child_projects: "{{ job_prefix }}-Deploy-Dev, {{ job_prefix }}-Test-EAP"
+downstream_projects: "{{ job_prefix }}-Deploy-Stg"
+nexus_repo: http://nexus.example.com/content/repositories/releases/
+openshift_user: ""
+openshift_password: ""
+openshift_server: server.ose.example.com
+openshift_dev_project: eap-dev
+openshift_stg_project: eap-stg
+application_host_url: dev.example.com
+dev_application_host_url: stg.example.com
+jenkins_listview_name: "{{ job_prefix }}-Jobs"
+jenkins_pipeline_name: "{{ job_prefix }}-Pipe"
+jenkins_pipeline_jobs: Build,Test-EAP,Deploy-Dev,Deploy-Stg
+jenkins_host_url: http://localhost:8080

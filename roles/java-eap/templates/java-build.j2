@@ -5,7 +5,7 @@
   <keepDependencies>false</keepDependencies>
   <properties>
     <com.coravy.hudson.plugins.github.GithubProjectProperty plugin="github@1.18.2">
-      <projectUrl>{{ GIT_URL }}</projectUrl>
+      <projectUrl>{{ git_url }}</projectUrl>
       <displayName></displayName>
     </com.coravy.hudson.plugins.github.GithubProjectProperty>
   </properties>
@@ -13,12 +13,12 @@
     <configVersion>2</configVersion>
     <userRemoteConfigs>
       <hudson.plugins.git.UserRemoteConfig>
-        <url>{{ GIT_URL }}</url>
+        <url>{{ git_url }}</url>
       </hudson.plugins.git.UserRemoteConfig>
     </userRemoteConfigs>
     <branches>
       <hudson.plugins.git.BranchSpec>
-        <name>{{ GIT_BRANCH }}</name>
+        <name>{{ git_branch }}</name>
       </hudson.plugins.git.BranchSpec>
     </branches>
     <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
@@ -41,11 +41,11 @@
   </triggers>
   <concurrentBuild>false</concurrentBuild>
   <rootModule>
-    <groupId>{{ MAVEN_GROUP_ID }}</groupId>
-    <artifactId>{{ MAVEN_ARTIFACT_ID }}</artifactId>
+    <groupId>{{ maven_group_id }}</groupId>
+    <artifactId>{{ maven_artifact_id }}</artifactId>
   </rootModule>
-  <rootPOM>{{ MAVEN_POM }}</rootPOM>
-  <goals>{{ MAVEN_BUILD_GOALS }}</goals>
+  <rootPOM>{{ maven_pom }}</rootPOM>
+  <goals>{{ maven_build_goals }}</goals>
   <aggregatorStyleBuild>true</aggregatorStyleBuild>
   <incrementalBuild>false</incrementalBuild>
   <ignoreUpstremChanges>false</ignoreUpstremChanges>
@@ -63,7 +63,7 @@
   <reporters/>
   <publishers>
     <hudson.tasks.BuildTrigger>
-      <childProjects>{{ BUILD_CHILD_PROJECTS }}</childProjects>
+      <childProjects>{{ build_child_projects }}</childProjects>
       <threshold>
         <name>SUCCESS</name>
         <ordinal>0</ordinal>
@@ -73,13 +73,13 @@
     </hudson.tasks.BuildTrigger>
     <hudson.maven.RedeployPublisher>
       <id>Releases</id>
-      <url>{{ NEXUS_REPO }}</url>
+      <url>{{ nexus_repo }}</url>
       <uniqueVersion>true</uniqueVersion>
       <evenIfUnstable>false</evenIfUnstable>
     </hudson.maven.RedeployPublisher>
     <au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger plugin="build-pipeline-plugin@1.5.2">
       <configs/>
-      <downstreamProjectNames>{{ DOWNSTREAM_PROJECTS }}</downstreamProjectNames>
+      <downstreamProjectNames>{{ downstream_projects }}</downstreamProjectNames>
     </au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger>
   </publishers>
   <buildWrappers/>
