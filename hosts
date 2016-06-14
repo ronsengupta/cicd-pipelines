@@ -2,3 +2,29 @@ pipeline1 ansible_connection=local
 
 [jenkins-pipeline]
 pipeline1
+
+[jenkins-pipeline:vars]
+job_prefix=""
+git_url=https://git.example.com/example/example.git
+git_branch=exampleBranch
+git_context=""
+sonar_url=http://sonar.example.com
+maven_group_id=org.examples
+maven_artifact_id=exampleArtifact
+maven_pom=pom.xml
+maven_build_goals=clean package
+maven_test_goals="clean org.jacoco:jacoco-maven-plugin:prepare-agent test integration-test sonar:sonar -Dsonar.host.url={{ sonar_url }}"
+build_child_projects="{{ job_prefix }}-Deploy-Dev, {{ job_prefix }}-Test-EAP"
+downstream_projects="{{ job_prefix }}-Deploy-Stg"
+nexus_repo=http://nexus.example.com/content/repositories/releases/
+openshift_user=""
+openshift_password=""
+openshift_server=master.example.com
+openshift_dev_project=dev_release
+openshift_stg_project=stg_release
+application_host_url=stg.example.com
+dev_application_host_url=dev.example.com
+jenkins_listview_name="{{ job_prefix }}-Jobs"
+jenkins_pipeline_name="{{ job_prefix }}-Pipe"
+jenkins_pipeline_jobs=Build,Test-EAP,Deploy-Dev,Deploy-Stg
+jenkins_host_url=http://jenkins.example.com

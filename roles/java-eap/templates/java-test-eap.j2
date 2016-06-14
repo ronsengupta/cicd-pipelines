@@ -8,12 +8,12 @@
     <configVersion>2</configVersion>
     <userRemoteConfigs>
       <hudson.plugins.git.UserRemoteConfig>
-        <url>{{ GIT_URL  }}</url>
+        <url>{{ git_url  }}</url>
       </hudson.plugins.git.UserRemoteConfig>
     </userRemoteConfigs>
     <branches>
       <hudson.plugins.git.BranchSpec>
-        <name>*/{{ GIT_BRANCH }}</name>
+        <name>*/{{ git_branch }}</name>
       </hudson.plugins.git.BranchSpec>
     </branches>
     <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
@@ -28,11 +28,11 @@
   <triggers/>
   <concurrentBuild>false</concurrentBuild>
   <rootModule>
-    <groupId>{{ MAVEN_GROUP_ID }}</groupId>
-    <artifactId>{{ MAVEN_ARTIFACT_ID }}</artifactId>
+    <groupId>{{ maven_group_id }}</groupId>
+    <artifactId>{{ maven_artifact_id }}</artifactId>
   </rootModule>
-  <rootPOM>{{ MAVEN_POM }}</rootPOM>
-  <goals>{{ MAVEN_TEST_GOALS }}</goals>
+  <rootPOM>{{ maven_pom }}</rootPOM>
+  <goals>{{ maven_test_goals }}</goals>
   <aggregatorStyleBuild>true</aggregatorStyleBuild>
   <incrementalBuild>false</incrementalBuild>
   <ignoreUpstremChanges>false</ignoreUpstremChanges>
@@ -64,7 +64,7 @@
 if [ ! -d &quot;$JBOSS_HOME&quot; ]; then
   mkdir jboss
   cd jboss
-  curl -o jboss.tar -0 {{ NEXUS_REPO }}/org/jboss/eap/6.4.0/eap-6.4.0.tar
+  curl -o jboss.tar -0 {{ nexus_repo }}/org/jboss/eap/6.4.0/eap-6.4.0.tar
   tar -xvf jboss.tar
 fi
 

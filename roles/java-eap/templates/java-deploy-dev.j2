@@ -182,21 +182,21 @@ fi
   <publishers>
     <au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger plugin="build-pipeline-plugin@1.5.2">
       <configs/>
-      <downstreamProjectNames>{{ JOB_PREFIX }}-Deploy-Stg</downstreamProjectNames>
+      <downstreamProjectNames>{{ job_prefix }}-Deploy-Stg</downstreamProjectNames>
     </au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger>
   </publishers>
   <buildWrappers>
     <EnvInjectBuildWrapper plugin="envinject@1.92.1">
       <info>
-        <propertiesContent>APP_HOSTNAME={{ DEV_APPLICATION_HOST_URL }}
-APP_NAME={{ MAVEN_ARTIFACT_ID }}
-APP_GIT={{ GIT_URL }}
-APP_GIT_REF={{ GIT_BRANCH }}
-APP_GIT_CONTEXT_DIR={{ GIT_CONTEXT }}
-USER_NAME={{ OPENSHIFT_USER }}
-OSE_SERVER={{ OPENSHIFT_SERVER }}
+        <propertiesContent>APP_HOSTNAME={{ dev_application_host_url }}
+APP_NAME={{ maven_artifact_id }}
+APP_GIT={{ git_url }}
+APP_GIT_REF={{ git_branch }}
+APP_GIT_CONTEXT_DIR={{ git_context }}
+USER_NAME={{ openshift_user }}
+OSE_SERVER={{ openshift_server }}
 CERT_PATH=
-DEVEL_PROJ_NAME={{ OPENSHIFT_DEV_PROJECT }}</propertiesContent>
+DEVEL_PROJ_NAME={{ openshift_dev_project }}</propertiesContent>
         <loadFilesFromMaster>false</loadFilesFromMaster>
       </info>
     </EnvInjectBuildWrapper>
@@ -206,7 +206,7 @@ DEVEL_PROJ_NAME={{ OPENSHIFT_DEV_PROJECT }}</propertiesContent>
       <passwordEntries>
         <EnvInjectPasswordEntry>
           <name>USER_PASSWD</name>
-          <value>{{ OPENSHIFT_PASSWORD }}</value>
+          <value>{{ openshift_password }}</value>
         </EnvInjectPasswordEntry>
         <EnvInjectPasswordEntry>
           <name></name>

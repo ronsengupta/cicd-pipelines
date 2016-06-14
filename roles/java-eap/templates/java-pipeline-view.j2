@@ -1,13 +1,13 @@
 <se.diabol.jenkins.pipeline.DeliveryPipelineView plugin="delivery-pipeline-plugin@0.9.9">
-  <name>{{ JENKINS_PIPELINE_NAME }}</name>
+  <name>{{ jenkins_pipeline_name }}</name>
   <filterExecutors>false</filterExecutors>
   <filterQueue>false</filterQueue>
   <properties class="hudson.model.View$PropertyList"/>
   <componentSpecs>
     <se.diabol.jenkins.pipeline.DeliveryPipelineView_-ComponentSpec>
       <name></name>
-      <firstJob>{{ JOB_PREFIX }}-Build</firstJob>
-      <lastJob>{{ JOB_PREFIX }}-Deploy-Stg</lastJob>
+      <firstJob>{{ job_prefix }}-Build</firstJob>
+      <lastJob>{{ job_prefix }}-Deploy-Stg</lastJob>
     </se.diabol.jenkins.pipeline.DeliveryPipelineView_-ComponentSpec>
   </componentSpecs>
   <noOfPipelines>3</noOfPipelines>
