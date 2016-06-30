@@ -1,34 +1,12 @@
 ---
 
-    - name: Create output directory
-      #file: path=/etc/some_directory state=directory mode=0755
-      file: path=output state=directory mode=0755
-
-    - name: Create Build Config File
-      template: src=java-build.j2 dest=output/java-build.xml
-
-    - name: Create Test Config File
-      template: src=java-test-eap.j2 dest=output/java-test-eap.xml
-
-    - name: Create Dev Deploy Config File
-      template: src=java-deploy-dev.j2 dest=output/java-deploy-dev.xml
-
-    - name: Create Stg  Deploy Config File
-      template: src=java-deploy-stg.j2 dest=output/java-deploy-stg.xml
-
-    - name: Create List View 
-      template: src=java-list-view.j2 dest=output/java-list-view.xml
-
-    - name: Create Pipeline View
-      template: src=java-pipeline-view.j2 dest=output/java-pipeline-view.xml
-
     - name: Deploy {{ job_prefix }}-Build
       uri: 
         url: "{{ jenkins_host_url }}/createItem?name={{ job_prefix }}-Build"
         method: POST
         return_content: yes
         HEADER_Content-Type: "application/xml"
-        body: "{{ lookup('file', 'output/java-build.xml') }}"
+        body: "{{ lookup('template', 'java-build.j2') }}"
 
     - name: Deploy {{ job_prefix }}-Test-EAP
       uri: 
@@ -36,7 +14,7 @@
         method: POST
         return_content: yes
         HEADER_Content-Type: "application/xml"
-        body: "{{ lookup('file', 'output/java-test-eap.xml') }}"
+        body: "{{ lookup('template', 'java-test-eap.j2') }}"
 
     - name: Deploy {{ job_prefix }}-Deploy-Dev
       uri: 
@@ -44,7 +22,7 @@
         method: POST
         return_content: yes
         HEADER_Content-Type: "application/xml"
-        body: "{{ lookup('file', 'output/java-deploy-dev.xml') }}"
+        body: "{{ lookup('template', 'java-deploy-dev.j2') }}"
 
     - name: Deploy {{ job_prefix }}-Deploy-Stg
       uri: 
@@ -52,7 +30,7 @@
         method: POST
         return_content: yes
         HEADER_Content-Type: "application/xml"
-        body: "{{ lookup('file', 'output/java-deploy-stg.xml') }}"
+        body: "{{ lookup('template', 'java-deploy-stg.j2') }}"
 
     - name: Deploy {{ jenkins_listview_name }}
       uri: 
@@ -60,7 +38,7 @@
         method: POST
         return_content: yes
         HEADER_Content-Type: "application/xml"
-        body: "{{ lookup('file', 'output/java-list-view.xml') }}"
+        body: "{{ lookup('template', 'java-list-view.j2') }}"
 
     - name: Deploy {{ jenkins_pipeline_name }}
       uri: 
@@ -68,8 +46,14 @@
         method: POST
         return_content: yes
         HEADER_Content-Type: "application/xml"
-        body: "{{ lookup('file', 'output/java-pipeline-view.xml') }}"
+        body: "{{ lookup('template', 'java-pipeline-view.j2') }}"
 
-    - name: Remove Output Directory
-      file: path=output state=absent
+    - name: Adding Credentials
+      uri:
+        url: "{{ jenkins_host_url }}/scriptText"
+        method: POST
+        return_content: yes
+        HEADER_Content-Type: "application/x-www-form-urlencoded"
+        body: "{{ lookup('template', 'credentials.groovy.j2') }}"
+      tags: creds
 

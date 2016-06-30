@@ -49,15 +49,12 @@
   <globalSettings class="jenkins.mvn.DefaultGlobalSettingsProvider"/>
   <reporters/>
   <publishers/>
-  <buildWrappers>
-    <EnvInjectBuildWrapper plugin="envinject@1.92.1">
+  <prebuilders>
+    <EnvInjectBuilder plugin="envinject@1.92.1">
       <info>
         <propertiesContent>JBOSS_HOME=$WORKSPACE/jboss/jboss-eap-6.4</propertiesContent>
-        <loadFilesFromMaster>false</loadFilesFromMaster>
       </info>
-    </EnvInjectBuildWrapper>
-  </buildWrappers>
-  <prebuilders>
+    </EnvInjectBuilder>
     <hudson.tasks.Shell>
       <command>echo &quot;JBOSS_HOME&quot; $JBOSS_HOME
 
