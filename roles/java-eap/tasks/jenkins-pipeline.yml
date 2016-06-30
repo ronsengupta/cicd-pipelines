@@ -54,6 +54,6 @@
         method: POST
         return_content: yes
         HEADER_Content-Type: "application/x-www-form-urlencoded"
-        body: "{{ lookup('template', 'credentials.groovy.j2') }}"
+        body: "script={{ lookup('template', 'credentials.groovy.j2') }}"
       tags: creds
 
