@@ -13,7 +13,11 @@
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>oc project $DEVEL_PROJ_NAME
+      <command>DEVEL_PROJ_NAME={{ openshift_dev_project }}
+PROD_PROJ_NAME={{ openshift_stg_project }}
+APP_HOSTNAME={{ application_host_url }}
+
+oc project $DEVEL_PROJ_NAME
 
 IS_NAME=`oc get is| tail -1|awk &apos;{print $1}&apos;`
 
@@ -66,14 +70,5 @@ fi</command>
   </builders>
   <publishers/>
   <buildWrappers>
-    <EnvInjectBuildWrapper plugin="envinject@1.92.1">
-      <info>
-        <propertiesContent>DEVEL_PROJ_NAME={{ openshift_dev_project }} 
-PROD_PROJ_NAME={{ openshift_stg_project }}
-APP_HOSTNAME={{ application_host_url }}
-        </propertiesContent>
-        <loadFilesFromMaster>false</loadFilesFromMaster>
-      </info>
-    </EnvInjectBuildWrapper>
   </buildWrappers>
 </project>

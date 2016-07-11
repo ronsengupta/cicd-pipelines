@@ -11,6 +11,11 @@
           <description>Takes the value of the Maven Java Build job in the pipeline and uses it to retrieve the artifact created</description>
           <defaultValue>0</defaultValue>
         </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>ALTERNATE_REPO_URL</name>
+          <description>A URL that differs from the distribution management in the pom.xml</description>
+          <defaultValue>{{ alternate_repo }}</defaultValue>
+        </hudson.model.StringParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
@@ -24,8 +29,20 @@
   <builders>
     <hudson.tasks.Shell>
       <command>echo &quot;MVN BUILD JOB NUMBER = $BUILD_JOB_NUMBER&quot;
+echo &quot;ALT REPO = $ALTERNATE_REPO_URL&quot;
 
+APP_HOSTNAME={{ dev_application_host_url }}
+APP_NAME={{ maven_artifact_id }}
+APP_GIT={{ git_url }}
+APP_GIT_REF={{ git_branch }}
+APP_GIT_CONTEXT_DIR={{ git_context }}
+OSE_SERVER={{ openshift_server }}
+CERT_PATH=
+DEVEL_PROJ_NAME={{ openshift_dev_project }}
+
+set +x
 oc login -u$USER_NAME -p$USER_PASSWD --server=$OSE_SERVER --certificate-authority=$CERT_PATH
+set -x
 
 oc project $DEVEL_PROJ_NAME
 
@@ -67,7 +84,7 @@ else
 
   # Application already exists, just need to start a new build
   echo &quot;App Exists. Triggering application build and deployment&quot;
-  BUILD_ID=`oc start-build ${BUILD_CONFIG} --env=BUILD_JOB_NUMBER=$BUILD_JOB_NUMBER`
+  BUILD_ID=`oc start-build ${BUILD_CONFIG} --env=BUILD_JOB_NUMBER=$BUILD_JOB_NUMBER,REPO_URL=$ALTERNATE_REPO_URL`
   
 fi
 
@@ -198,19 +215,6 @@ fi
     </au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger>
   </publishers>
   <buildWrappers>
-    <EnvInjectBuildWrapper plugin="envinject@1.92.1">
-      <info>
-        <propertiesContent>APP_HOSTNAME={{ dev_application_host_url }}
-APP_NAME={{ maven_artifact_id }}
-APP_GIT={{ git_url }}
-APP_GIT_REF={{ git_branch }}
-APP_GIT_CONTEXT_DIR={{ git_context }}
-OSE_SERVER={{ openshift_server }}
-CERT_PATH=
-DEVEL_PROJ_NAME={{ openshift_dev_project }}</propertiesContent>
-        <loadFilesFromMaster>false</loadFilesFromMaster>
-      </info>
-    </EnvInjectBuildWrapper>
     <org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper plugin="credentials-binding@1.8">
       <bindings>
         <org.jenkinsci.plugins.credentialsbinding.impl.UsernamePasswordMultiBinding>

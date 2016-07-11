@@ -1,59 +1,73 @@
 ---
-
     - name: Deploy {{ job_prefix }}-Build
       uri: 
         url: "{{ jenkins_host_url }}/createItem?name={{ job_prefix }}-Build"
+        force_basic_auth: yes
+        user: "{{ pipeline_user }}"
+        password: "{{ pipeline_password }}"
         method: POST
         return_content: yes
         HEADER_Content-Type: "application/xml"
         body: "{{ lookup('template', 'java-build.j2') }}"
+      tags: jenkins-jobs
 
     - name: Deploy {{ job_prefix }}-Test-EAP
       uri: 
         url: "{{ jenkins_host_url }}/createItem?name={{ job_prefix }}-Test-EAP"
+        force_basic_auth: yes
+        user: "{{ pipeline_user }}"
+        password: "{{ pipeline_password }}"
         method: POST
         return_content: yes
         HEADER_Content-Type: "application/xml"
         body: "{{ lookup('template', 'java-test-eap.j2') }}"
+      tags: jenkins-jobs
 
     - name: Deploy {{ job_prefix }}-Deploy-Dev
       uri: 
         url: "{{ jenkins_host_url }}/createItem?name={{ job_prefix }}-Deploy-Dev"
+        force_basic_auth: yes
+        user: "{{ pipeline_user }}"
+        password: "{{ pipeline_password }}"
         method: POST
         return_content: yes
         HEADER_Content-Type: "application/xml"
         body: "{{ lookup('template', 'java-deploy-dev.j2') }}"
+      tags: jenkins-jobs
 
     - name: Deploy {{ job_prefix }}-Deploy-Stg
       uri: 
         url: "{{ jenkins_host_url }}/createItem?name={{ job_prefix }}-Deploy-Stg"
+        force_basic_auth: yes
+        user: "{{ pipeline_user }}"
+        password: "{{ pipeline_password }}"
         method: POST
         return_content: yes
         HEADER_Content-Type: "application/xml"
         body: "{{ lookup('template', 'java-deploy-stg.j2') }}"
+      tags: jenkins-jobs
 
     - name: Deploy {{ jenkins_listview_name }}
       uri: 
         url: "{{ jenkins_host_url }}/createView?name={{ jenkins_listview_name }}"
+        force_basic_auth: yes
+        user: "{{ pipeline_user }}"
+        password: "{{ pipeline_password }}"
         method: POST
         return_content: yes
         HEADER_Content-Type: "application/xml"
         body: "{{ lookup('template', 'java-list-view.j2') }}"
+      tags: jenkins-views
 
     - name: Deploy {{ jenkins_pipeline_name }}
       uri: 
         url: "{{ jenkins_host_url }}/createView?name={{ jenkins_pipeline_name }}"
+        force_basic_auth: yes
+        user: "{{ pipeline_user }}"
+        password: "{{ pipeline_password }}"
         method: POST
         return_content: yes
         HEADER_Content-Type: "application/xml"
         body: "{{ lookup('template', 'java-pipeline-view.j2') }}"
-
-    - name: Adding Credentials
-      uri:
-        url: "{{ jenkins_host_url }}/scriptText"
-        method: POST
-        return_content: yes
-        HEADER_Content-Type: "application/x-www-form-urlencoded"
-        body: "script={{ lookup('template', 'credentials.groovy.j2') }}"
-      tags: creds
+      tags: jenkins-views
 

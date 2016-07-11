@@ -2,6 +2,7 @@ job_prefix: ""
 git_url: https://git.example.com/project/project.git
 git_branch: ""
 git_context: ""
+scm_credentials_id: ""
 sonar_url: http://sonar.example.com
 maven_group_id: ""
 maven_artifact_id: ""
@@ -14,6 +15,7 @@ downstream_projects: "{{ job_prefix }}-Deploy-Stg"
 nexus_repo: http://nexus.example.com/content/repositories/releases/
 nexus_user: ""
 nexus_password: ""
+alternate_repo_url: ""
 openshift_user: ""
 openshift_password: ""
 openshift_server: server.ose.example.com
