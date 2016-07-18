@@ -57,7 +57,7 @@ if [ -z &quot;$BUILD_CONFIG&quot; -o &quot;$BUILD_CONFIG&quot; == &quot;NAME&quo
   echo &quot;Create a new app&quot;
   oc new-app --template=eap64-basic-s2i -p \
   APPLICATION_NAME=$APP_NAME,HOSTNAME_HTTP=$APP_HOSTNAME,SOURCE_REPOSITORY_URL=$APP_GIT,SOURCE_REPOSITORY_REF=$APP_GIT_REF,CONTEXT_DIR=$APP_GIT_CONTEXT_DIR\
-   -l name=$APP_NAME
+   --env=BUILD_JOB_NUMBER=$BUILD_JOB_NUMBER,REPO_URL=$ALTERNATE_REPO_URL -l name=$APP_NAME
  
   echo &quot;Find build id&quot;
   BUILD_ID=`oc get builds | tail -1 | awk &apos;{print $1}&apos;`
@@ -116,7 +116,7 @@ while [ $rc -ne 0 -a $count -lt $attempts ]; do
 done
 
 # stream the logs for the build that just started
-oc build-logs $BUILD_ID
+oc logs $BUILD_ID-build
 
 sleep 5
 
@@ -209,10 +209,15 @@ fi
     </hudson.tasks.Shell>
   </builders>
   <publishers>
-    <au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger plugin="build-pipeline-plugin@1.5.2">
-      <configs/>
-      <downstreamProjectNames>{{ job_prefix }}-Deploy-Stg</downstreamProjectNames>
-    </au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger>
+    <hudson.tasks.BuildTrigger>
+      <childProjects>TM-Test-EAP</childProjects>
+      <threshold>
+        <name>SUCCESS</name>
+        <ordinal>0</ordinal>
+        <color>BLUE</color>
+        <completeBuild>true</completeBuild>
+      </threshold>
+    </hudson.tasks.BuildTrigger>
   </publishers>
   <buildWrappers>
     <org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper plugin="credentials-binding@1.8">

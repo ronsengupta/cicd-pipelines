@@ -1,2 +1,4 @@
 ---
+  - include: jenkins-credentials.yml  
+  
   - include: jenkins-pipeline.yml  

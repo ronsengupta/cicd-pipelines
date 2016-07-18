@@ -17,7 +17,7 @@ uuid = randomUUID() as String
 println uuid
 
 String content = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n\
-          <settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\
+<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\
           xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\
           xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd\">\
 \n\
@@ -34,7 +34,7 @@ String content = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n\
    <mirror>\n\
       <id>nexus</id>\n\
       <mirrorOf>*</mirrorOf>\n\
-      <url>{{ nexus_repo }} </url>\n\
+      <url>{{ nexus_mirror }} </url>\n\
     </mirror>\n\
   </mirrors>\n\
 \n\
