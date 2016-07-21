@@ -2,15 +2,20 @@ job_prefix: ""
 git_url: https://git.example.com/project/project.git
 git_branch: ""
 git_context: ""
+scm_credentials_id: ""
 sonar_url: http://sonar.example.com
 maven_group_id: ""
 maven_artifact_id: ""
 maven_pom: pom.xml
 maven_build_goals: clean package
 maven_test_goals: "clean org.jacoco:jacoco-maven-plugin:prepare-agent test integration-test sonar:sonar -Dsonar.host.url={{ sonar_url }}"
-build_child_projects: "{{ job_prefix }}-Deploy-Dev, {{ job_prefix }}-Test-EAP"
+build_child_project: "{{ {{ job_prefix }}-Test-EAP"
+build_child_project_with_params: "{{ job_prefix }}-Deploy-Dev"
 downstream_projects: "{{ job_prefix }}-Deploy-Stg"
 nexus_repo: http://nexus.example.com/content/repositories/releases/
+nexus_user: ""
+nexus_password: ""
+alternate_repo_url: ""
 openshift_user: ""
 openshift_password: ""
 openshift_server: server.ose.example.com

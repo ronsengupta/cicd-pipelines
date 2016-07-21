@@ -3,7 +3,22 @@
   <actions/>
   <description></description>
   <keepDependencies>false</keepDependencies>
-  <properties/>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>BUILD_JOB_NUMBER</name>
+          <description>Takes the value of the Maven Java Build job in the pipeline and uses it to retrieve the artifact created</description>
+          <defaultValue>0</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>ALTERNATE_REPO_URL</name>
+          <description>A URL that differs from the distribution management in the pom.xml</description>
+          <defaultValue>{{ alternate_repo }}</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
   <scm class="hudson.scm.NullSCM"/>
   <canRoam>true</canRoam>
   <disabled>false</disabled>
@@ -13,7 +28,21 @@
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>oc login -u$USER_NAME -p$USER_PASSWD --server=$OSE_SERVER --certificate-authority=$CERT_PATH
+      <command>echo &quot;MVN BUILD JOB NUMBER = $BUILD_JOB_NUMBER&quot;
+echo &quot;ALT REPO = $ALTERNATE_REPO_URL&quot;
+
+APP_HOSTNAME={{ dev_application_host_url }}
+APP_NAME={{ maven_artifact_id }}
+APP_GIT={{ git_url }}
+APP_GIT_REF={{ git_branch }}
+APP_GIT_CONTEXT_DIR={{ git_context }}
+OSE_SERVER={{ openshift_server }}
+CERT_PATH=
+DEVEL_PROJ_NAME={{ openshift_dev_project }}
+
+set +x
+oc login -u$USER_NAME -p$USER_PASSWD --server=$OSE_SERVER --certificate-authority=$CERT_PATH
+set -x
 
 oc project $DEVEL_PROJ_NAME
 
@@ -28,36 +57,18 @@ if [ -z &quot;$BUILD_CONFIG&quot; -o &quot;$BUILD_CONFIG&quot; == &quot;NAME&quo
   echo &quot;Create a new app&quot;
   oc new-app --template=eap64-basic-s2i -p \
   APPLICATION_NAME=$APP_NAME,HOSTNAME_HTTP=$APP_HOSTNAME,SOURCE_REPOSITORY_URL=$APP_GIT,SOURCE_REPOSITORY_REF=$APP_GIT_REF,CONTEXT_DIR=$APP_GIT_CONTEXT_DIR\
-   -l name=$APP_NAME
+    -l name=$APP_NAME
+
+  CANCEL_BUILD_RESULT=`oc cancel-build $APP_NAME-1`
+  echo &quot;Cancel Result: $CANCEL_BUILD_RESULT&quot;
  
-  echo &quot;Find build id&quot;
-  BUILD_ID=`oc get builds | tail -1 | awk &apos;{print $1}&apos;`
-  rc=1
-  attempts=75
-  count=0
-  while [ $rc -ne 0 -a $count -lt $attempts ]; do
-    BUILD_ID=`oc get builds | tail -1 | awk &apos;{print $1}&apos;`
-    if [ $BUILD_ID == &quot;NAME&quot; ]; then
-      count=$(($count+1))
-      echo &quot;Attempt $count/$attempts&quot;
-      sleep 5
-    else 
-      rc=0
-      echo &quot;Build Id is :&quot; ${BUILD_ID}
-    fi 
-  done
-
-  if [ $rc -ne 0 ]; then
-    echo &quot;Fail: Build could not be found after maximum attempts&quot;
-    exit 1
-  fi 
-else
-
-  # Application already exists, just need to start a new build
-  echo &quot;App Exists. Triggering application build and deployment&quot;
-  BUILD_ID=`oc start-build ${BUILD_CONFIG}`
-  
+  BUILD_CONFIG=$APP_NAME
 fi
+ 
+# Start a new build
+echo &quot;Triggering application build and deployment&quot;
+BUILD_ID=`oc start-build ${BUILD_CONFIG} --env=BUILD_JOB_NUMBER=$BUILD_JOB_NUMBER,REPO_URL=$ALTERNATE_REPO_URL`
+  
 
 echo &quot;Waiting for build to start&quot;
 rc=1
@@ -87,7 +98,7 @@ while [ $rc -ne 0 -a $count -lt $attempts ]; do
 done
 
 # stream the logs for the build that just started
-oc build-logs $BUILD_ID
+oc logs $BUILD_ID-build
 
 sleep 5
 
@@ -96,7 +107,7 @@ rc=1
 count=0
 attempts=100
 while [ $rc -ne 0 -a $count -lt $attempts ]; do
-  status=`oc get build ${BUILD_ID} -t &apos;{{'{{'}}.status.phase}}&apos;`
+  status=`oc get build ${BUILD_ID} --template &apos;{{'{{'}}.status.phase}}&apos;`
   if [[ $status == &quot;Failed&quot; || $status == &quot;Error&quot; || $status == &quot;Canceled&quot; ]]; then
     echo &quot;Fail: Build completed with unsuccessful status: ${status}&quot;
     exit 1
@@ -180,39 +191,25 @@ fi
     </hudson.tasks.Shell>
   </builders>
   <publishers>
-    <au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger plugin="build-pipeline-plugin@1.5.2">
-      <configs/>
-      <downstreamProjectNames>{{ job_prefix }}-Deploy-Stg</downstreamProjectNames>
-    </au.com.centrumsystems.hudson.plugin.buildpipeline.trigger.BuildPipelineTrigger>
+    <hudson.tasks.BuildTrigger>
+      <childProjects>TM-Test-EAP</childProjects>
+      <threshold>
+        <name>SUCCESS</name>
+        <ordinal>0</ordinal>
+        <color>BLUE</color>
+        <completeBuild>true</completeBuild>
+      </threshold>
+    </hudson.tasks.BuildTrigger>
   </publishers>
   <buildWrappers>
-    <EnvInjectBuildWrapper plugin="envinject@1.92.1">
-      <info>
-        <propertiesContent>APP_HOSTNAME={{ dev_application_host_url }}
-APP_NAME={{ maven_artifact_id }}
-APP_GIT={{ git_url }}
-APP_GIT_REF={{ git_branch }}
-APP_GIT_CONTEXT_DIR={{ git_context }}
-USER_NAME={{ openshift_user }}
-OSE_SERVER={{ openshift_server }}
-CERT_PATH=
-DEVEL_PROJ_NAME={{ openshift_dev_project }}</propertiesContent>
-        <loadFilesFromMaster>false</loadFilesFromMaster>
-      </info>
-    </EnvInjectBuildWrapper>
-    <EnvInjectPasswordWrapper plugin="envinject@1.92.1">
-      <injectGlobalPasswords>false</injectGlobalPasswords>
-      <maskPasswordParameters>true</maskPasswordParameters>
-      <passwordEntries>
-        <EnvInjectPasswordEntry>
-          <name>USER_PASSWD</name>
-          <value>{{ openshift_password }}</value>
-        </EnvInjectPasswordEntry>
-        <EnvInjectPasswordEntry>
-          <name></name>
-          <value>q2tnc7RcipUXaUupteozoA==</value>
-        </EnvInjectPasswordEntry>
-      </passwordEntries>
-    </EnvInjectPasswordWrapper>
+    <org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper plugin="credentials-binding@1.8">
+      <bindings>
+        <org.jenkinsci.plugins.credentialsbinding.impl.UsernamePasswordMultiBinding>
+          <credentialsId>openshiftId</credentialsId>
+          <usernameVariable>USER_NAME</usernameVariable>
+          <passwordVariable>USER_PASSWD</passwordVariable>
+        </org.jenkinsci.plugins.credentialsbinding.impl.UsernamePasswordMultiBinding>
+      </bindings>
+    </org.jenkinsci.plugins.credentialsbinding.impl.SecretBuildWrapper>
   </buildWrappers>
 </project>
